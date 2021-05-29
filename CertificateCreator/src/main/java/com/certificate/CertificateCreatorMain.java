@@ -1,6 +1,5 @@
 package com.certificate;
 
-import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.xslf.usermodel.*;
 
 import java.awt.*;
@@ -8,15 +7,21 @@ import java.io.*;
 import java.time.LocalDate;
 import java.util.HashMap;
 
+
 /**
  * @author Ejaskhan
+ * This API is using Apache poi for editing and creating a powerpoint and using a
+ * VBS for batch converting the ppt to pdf, please refer README.md for more details
  **/
 public class CertificateCreatorMain {
     static HashMap<String, String> mappings = getFileMappings();
+    static final String pptLocation = "C:\\CertificateCreator\\generatedFiles\\";
+    static final String PPT = ".pptx";
+    static final String PDF = ".pdf";
+
     public static void main(String[] args) {
         FileInputStream inputStream = null;
         try {
-
             LocalDate currentDate = LocalDate.now();
 
             String monthStr = currentDate.getMonth().toString();
@@ -36,8 +41,7 @@ public class CertificateCreatorMain {
                 String line;
                 while ((line = br.readLine()) != null) {
                     String[] lineArray = line.split("-");
-                    if(lineArray.length!=2)
-                    {
+                    if (lineArray.length != 2) {
                         System.out.println(" Oh, Sorry, this is a wrong input");
                         throw new RuntimeException("wrong input");
                     }
@@ -51,6 +55,9 @@ public class CertificateCreatorMain {
                     }
                 }
             }
+            System.out.println(" Converting the pptx to pdf......");
+            convertToPdfVBS();
+            System.out.println(" Done conversion.......");
             System.out.println();
             System.out.println(success + " out of " + count + " certificates created successfully.......");
 
@@ -68,13 +75,15 @@ public class CertificateCreatorMain {
 
     static boolean createCertificate(String template, String name, String monthAndYear) {
         boolean isSuccess = false;
+
+
         try {
             System.out.println(" ************************************************************************************");
             System.out.println(" Processing the certificate for " + name);
-           // FileInputStream is = new FileInputStream("src/main/resources/" + template);
+            // FileInputStream is = new FileInputStream("src/main/resources/" + template);
             InputStream is = CertificateCreatorMain.class.getResourceAsStream("/" + template);
 
-            ZipSecureFile.setMinInflateRatio(0);
+            //ZipSecureFile.setMinInflateRatio(0);
             try (XMLSlideShow ppt = new XMLSlideShow(is)) {
                 is.close();
 
@@ -97,7 +106,7 @@ public class CertificateCreatorMain {
                                 run.setBold(true);
                                 run.setFontSize(36.0);
                                 run.setFontFamily("Arial");
-                                if(template.equalsIgnoreCase(mappings.get("1"))) {
+                                if (template.equalsIgnoreCase(mappings.get("1"))) {
                                     run.setFontColor(Color.WHITE);
                                 }
 
@@ -108,7 +117,7 @@ public class CertificateCreatorMain {
                                 run2.setBold(true);
                                 run2.setFontSize(14.0);
                                 run2.setFontFamily("Arial");
-                                if(template.equalsIgnoreCase(mappings.get("1"))) {
+                                if (template.equalsIgnoreCase(mappings.get("1"))) {
                                     run2.setFontColor(Color.WHITE);
                                 }
 
@@ -126,18 +135,21 @@ public class CertificateCreatorMain {
                 }
                 System.out.println(" Creating the certificate.............");
                 String fileName = name + "-"
-                        + template.split("-")[0] + "(" + monthAndYear+")" + ".pptx";
-                try (FileOutputStream out = new FileOutputStream("C:\\CertificateCreator\\" + fileName)) {
+                        + template.split("-")[0] + "(" + monthAndYear + ")";
+                try (FileOutputStream out = new FileOutputStream(pptLocation + fileName + PPT)) {
                     ppt.write(out);
+                    ppt.close();
                 }
+
                 isSuccess = true;
-                System.out.println(" Done!!! File creation, file name: " + fileName);
+                System.out.println(" Done!!! File creation (ppt and pdf), file name: " + fileName);
                 System.out.println(" ************************************************************************************");
             }
 
         } catch (Exception exception) {
             exception.printStackTrace();
         }
+
 
         return isSuccess;
     }
@@ -150,5 +162,19 @@ public class CertificateCreatorMain {
         fileMap.put("3", "TeamAward-3.pptx");
         fileMap.put("4", "Above&Beyond-4.pptx");
         return fileMap;
+    }
+
+    static void convertToPdfVBS() {
+        try {
+            StringBuilder commandLineScript = new StringBuilder();
+            commandLineScript.append("wscript ");
+            commandLineScript.append(" C:\\CertificateCreator\\plugin\\convertPPTtoPDF.vbs");
+            commandLineScript.append(" C:\\CertificateCreator\\generatedFiles");
+
+            Runtime.getRuntime().exec(commandLineScript.toString());
+        } catch (IOException e) {
+            System.out.println(e);
+            System.exit(0);
+        }
     }
 }
