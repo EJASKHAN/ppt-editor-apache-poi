@@ -1,5 +1,6 @@
 package com.certificate;
 
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.xslf.usermodel.*;
 
 import java.awt.*;
@@ -83,7 +84,7 @@ public class CertificateCreatorMain {
             // FileInputStream is = new FileInputStream("src/main/resources/" + template);
             InputStream is = CertificateCreatorMain.class.getResourceAsStream("/" + template);
 
-            //ZipSecureFile.setMinInflateRatio(0);
+            ZipSecureFile.setMinInflateRatio(0);
             try (XMLSlideShow ppt = new XMLSlideShow(is)) {
                 is.close();
 
